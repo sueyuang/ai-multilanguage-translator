@@ -1,0 +1,22 @@
+services:
+  ai-translator:
+    image: ai-multilanguage-translator:1.1.0
+    pull_policy: never
+    ports:
+      - "${TRANSLATOR_PORT:-5005}:5005"
+    environment:
+      - FLASK_DEBUG=false
+    env_file:
+      - .env
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:5005/languages', timeout=5).read()"]
+      interval: 30s
+      timeout: 10s
+      start_period: 10s
+      retries: 3
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"

@@ -1,0 +1,159 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 多语言翻译</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Noto+Serif+SC:wght@500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css', v=asset_versions['css/style.css']) }}">
+</head>
+<body>
+    <div class="page-background" aria-hidden="true">
+        <div class="glow glow-a"></div>
+        <div class="glow glow-b"></div>
+        <div class="grain-overlay"></div>
+    </div>
+
+    <div class="container">
+        <header class="app-header">
+            <button id="settings-btn" class="settings-button" type="button" title="API 设置" aria-label="API 设置">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                    <path d="M12 15.5A3.5 3.5 0 1 0 12 8a3.5 3.5 0 0 0 0 7.5Z"></path>
+                    <path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 .6 1.7 1.7 0 0 0-.4 1.1V21a2 2 0 1 1-4 0v-.09A1.7 1.7 0 0 0 8 19.4a1.7 1.7 0 0 0-1.88.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 3.6 15a1.7 1.7 0 0 0-.6-1 1.7 1.7 0 0 0-1.1-.4H1.8a2 2 0 1 1 0-4h.09A1.7 1.7 0 0 0 3.6 8a1.7 1.7 0 0 0-.34-1.88l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 8 3.6a1.7 1.7 0 0 0 1-.6 1.7 1.7 0 0 0 .4-1.1V1.8a2 2 0 1 1 4 0v.09A1.7 1.7 0 0 0 15 3.6a1.7 1.7 0 0 0 1.88-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.4 8c.18.38.38.72.6 1 .3.37.73.6 1.2.6h.09a2 2 0 1 1 0 4h-.09A1.7 1.7 0 0 0 19.4 15Z"></path>
+                </svg>
+            </button>
+            <div class="brand-chip">Web Translation Studio</div>
+            <h1>AI 多语言翻译</h1>
+            <p>选择目标语言，快速得到并管理多语种翻译结果</p>
+        </header>
+
+        <main class="layout">
+            <section class="card input-card">
+                <div class="card-header">
+                    <h2>输入文本</h2>
+                    <button id="clear-btn" class="icon-button" type="button" title="清除文本" aria-label="清除文本">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                            <path d="M18 6L6 18M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+                <div class="input-wrapper">
+                    <textarea id="source-text" data-max-text-length="{{ max_text_length|default(5000) }}" placeholder="输入需要翻译的文本，支持粘贴多行内容..." rows="5" aria-label="要翻译的文本"></textarea>
+                </div>
+                <div class="input-meta">
+                    <span id="char-count">0</span>
+                    <span class="meta-divider">/</span>
+                    <span><span id="max-char-count">{{ max_text_length|default(5000) }}</span> 字符</span>
+                    <span class="meta-divider">·</span>
+                    <span>快捷键：Ctrl + Enter</span>
+                </div>
+            </section>
+
+            <section class="card language-card">
+                <div class="card-header">
+                    <h2>目标语言</h2>
+                    <div class="language-actions">
+                        <button type="button" id="select-all-btn" class="text-button">全选</button>
+                        <button type="button" id="deselect-all-btn" class="text-button">清空</button>
+                    </div>
+                </div>
+                <div id="language-checkboxes" class="language-grid"></div>
+                <button type="button" id="toggle-mobile-languages-btn" class="toggle-mobile-languages-button">更多语言</button>
+                <div class="custom-language-row">
+                    <label for="custom-language-select">自定义语言：</label>
+                    <select id="custom-language-select" class="custom-language-select">
+                        <option value="de">德语</option>
+                        <option value="ru">俄语</option>
+                        <option value="ar">阿拉伯语</option>
+                        <option value="ko">韩语</option>
+                    </select>
+                </div>
+                <div class="selected-count">已选择 <span id="selected-count">0</span> 种语言<span id="selected-hidden-count"></span></div>
+            </section>
+
+            <button id="translate-all-btn" class="translate-button" type="button">
+                <span class="button-content">开始翻译</span>
+                <span class="button-loader" aria-hidden="true">
+                    <span class="spinner"></span>
+                    <span>翻译中...</span>
+                </span>
+            </button>
+
+            <section class="results-section card" id="results-section">
+                <div class="results-header">
+                    <h2>翻译结果</h2>
+                    <div class="source-language-info" id="source-language-info" role="status" hidden></div>
+                </div>
+
+                <div class="empty-state" id="empty-state">
+                    <p class="empty-title">等待翻译</p>
+                    <p class="empty-desc">输入文本并选择语言后，点击“开始翻译”</p>
+                </div>
+
+                <div class="results-container" id="results-container"></div>
+            </section>
+        </main>
+
+        <footer class="app-footer">
+            <p>Powered by OpenAI-Compatible API / Index-Translate + Flask</p>
+        </footer>
+    </div>
+
+    <div id="toast-container" aria-live="polite" aria-atomic="true"></div>
+    <div id="settings-modal" class="settings-modal" hidden>
+        <div class="settings-backdrop" data-close-settings></div>
+        <section class="settings-panel" role="dialog" aria-modal="true" aria-labelledby="settings-title" tabindex="-1">
+            <div class="settings-panel-header">
+                <h2 id="settings-title">API 设置</h2>
+                <button id="settings-close-btn" class="icon-button" type="button" title="关闭设置" aria-label="关闭设置">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                        <path d="M18 6L6 18M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <form id="settings-form" class="settings-form">
+                <label class="settings-field" for="api-provider">
+                    <span>翻译服务</span>
+                    <select id="api-provider">
+                        <option value="">服务器默认</option>
+                        <option value="openai">OpenAI 兼容 API</option>
+                        <option value="index">Index-Translate 免费公共 API（bilibili）</option>
+                    </select>
+                </label>
+                <p id="index-provider-hint" class="settings-hint" hidden>Index-Translate 无需 Key，地址由服务器配置；模型名称留空即使用默认的 Index-Translate-35B-A3B。该模型专用于翻译，不做语言检测。</p>
+                <div id="openai-provider-fields" class="settings-provider-fields">
+                <label class="settings-field" for="api-base-url">
+                    <span>Base URL</span>
+                    <input id="api-base-url" type="url" placeholder="https://api.openai.com/v1" autocomplete="off">
+                </label>
+                <label class="settings-field" for="api-key">
+                    <span>Key</span>
+                    <input id="api-key" type="password" placeholder="sk-..." autocomplete="off">
+                </label>
+                <p class="settings-hint">Key 仅在当前标签页会话中保存；其他设置会保留。</p>
+                </div>
+                <label class="settings-field" for="api-model">
+                    <span>AI 模型名称</span>
+                    <input id="api-model" type="text" placeholder="gpt-3.5-turbo" autocomplete="off">
+                </label>
+                <p id="api-connection-status" class="api-connection-status" role="status" aria-live="polite" hidden></p>
+                <div id="api-effective-config" class="api-effective-config" role="status" aria-live="polite" hidden>
+                    <p class="api-effective-title">本次请求实际使用的配置</p>
+                    <dl id="api-effective-list" class="api-effective-list"></dl>
+                    <p id="api-effective-note" class="api-effective-note" hidden></p>
+                </div>
+                <div class="settings-actions">
+                    <button id="settings-test-btn" class="text-button settings-test-button" type="button">检测连接</button>
+                    <button id="settings-reset-btn" class="text-button" type="button">清除</button>
+                    <button class="translate-button settings-save-button" type="submit">
+                        <span class="button-content">保存设置</span>
+                    </button>
+                </div>
+            </form>
+        </section>
+    </div>
+    <script src="{{ url_for('static', filename='js/script.js', v=asset_versions['js/script.js']) }}"></script>
+</body>
+</html>
